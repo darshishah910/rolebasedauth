@@ -7,9 +7,17 @@ import "../styles/style.css";
 export default function RolesList() {
     const user = { name: "Admin", role: "admin" };
 
-    const handleLogout = () => {};
 
     const [users, setUsers] = useState<any[]>([]);
+    
+    const handleLogout = async () => {
+        try {
+            await axios.post("/logout");
+        } catch (e) { }
+
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+    };
 
     const fetchUsers = async () => {
         const res = await axios.get("/all-users-with-permissions");

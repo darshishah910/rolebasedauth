@@ -27,6 +27,7 @@ export default function Products() {
         image: null,
         in_stock: 1
     });
+
     const isAdmin = user?.role === "admin";
 
     const [editId, setEditId] = useState<number | null>(null);
@@ -40,19 +41,29 @@ export default function Products() {
 
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-    // ✅ Fetch user (for sidebar/navbar)
+    // ✅ NEW STATES
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState<any>({});
+
+    // ✅ Fetch user
     const fetchUser = async () => {
         const res = await axios.get("/user");
         setUser(res.data.user);
         setPermissions(res.data.permissions);
     };
 
-    // ✅ Fetch products
+    // ✅ Fetch products (with search + pagination)
     const fetchProducts = async () => {
-        const res = await axios.get("/products");
+        const res = await axios.get("/products", {
+            params: { search, page }
+        });
+
         setProducts(res.data.data);
+        setPagination(res.data);
     };
 
+    // ✅ INIT (only once)
     useEffect(() => {
         const token = localStorage.getItem("token");
 
@@ -62,8 +73,16 @@ export default function Products() {
         }
 
         fetchUser();
-        fetchProducts();
     }, []);
+
+    // ✅ FETCH PRODUCTS (debounce)
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            fetchProducts();
+        }, 400);
+
+        return () => clearTimeout(delay);
+    }, [search, page]);
 
     // ✅ Handle input
     const handleChange = (e: any) => {
@@ -71,15 +90,13 @@ export default function Products() {
 
         if (name === "image") {
             const file = files[0];
-
             setForm({ ...form, image: file });
 
             if (file) {
-                setPreviewImage(URL.createObjectURL(file)); // ✅ show new image
+                setPreviewImage(URL.createObjectURL(file));
             }
-
         } else if (name === "in_stock") {
-            setForm({ ...form, in_stock: parseInt(value) }); // ✅ safest
+            setForm({ ...form, in_stock: parseInt(value) });
         } else {
             setForm({ ...form, [name]: value });
         }
@@ -101,7 +118,6 @@ export default function Products() {
             const data = new FormData();
             (Object.keys(form) as (keyof typeof form)[]).forEach((key) => {
                 const value = form[key];
-
                 if (value === null) return;
 
                 if (value instanceof File) {
@@ -151,6 +167,7 @@ export default function Products() {
             image: null,
             in_stock: p.quantity > 0 ? 1 : 0
         });
+
         setPreviewImage(p.image);
         setEditId(p.id);
     };
@@ -186,64 +203,49 @@ export default function Products() {
         <div className="layout">
             <Toaster />
 
-            {/* ✅ Sidebar */}
             <Sidebar user={user} />
 
-            {/* ✅ Main */}
             <div className="main-content">
-
-                {/* ✅ Navbar */}
                 <Navbar user={user} onLogout={handleLogout} />
 
                 <div className="product-container">
                     <h2>Products</h2>
 
+                    {/* ✅ SEARCH */}
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        value={search}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            setPage(1);
+                        }}
+                        className="search-input"
+                    />
+
                     {/* FORM */}
                     {(canCreate || (editId && canEdit)) && (
-                    <div className="product-form">
-                        <input name="name" value={form.name} onChange={handleChange} placeholder="Name" />
-                        {errors.name && <p className="error">{errors.name}</p>}
+                        <div className="product-form">
+                            <input name="name" value={form.name} onChange={handleChange} placeholder="Name" />
+                            {errors.name && <p className="error">{errors.name}</p>}
 
-                        <input type="number" name="price" value={form.price} onChange={handleChange} placeholder="Price" />
-                        {errors.price && <p className="error">{errors.price}</p>}
+                            <input type="number" name="price" value={form.price} onChange={handleChange} placeholder="Price" />
+                            {errors.price && <p className="error">{errors.price}</p>}
 
-                        <input type="number" name="quantity" value={form.quantity} onChange={handleChange} placeholder="Qty" />
-                        {errors.quantity && <p className="error">{errors.quantity}</p>}
+                            <input type="number" name="quantity" value={form.quantity} onChange={handleChange} placeholder="Qty" />
+                            {errors.quantity && <p className="error">{errors.quantity}</p>}
 
-                        {editId && (
-                            <div>
-                                <p>Current Image:</p>
-                                <img
-                                    src={products.find(p => p.id === editId)?.image}
-                                    className="product-img"
-                                />
-                            </div>
-                        )}
+                            <input type="file" name="image" onChange={handleChange} />
 
-                        <input type="file" name="image" onChange={handleChange} className="full" />
+                            <select name="in_stock" value={form.in_stock} onChange={handleChange}>
+                                <option value={1}>In Stock</option>
+                                <option value={0}>Out of Stock</option>
+                            </select>
 
-                        {/* ✅ Show new selected image */}
-                        {form.image && (
-                            <div>
-                                <p>New Image Preview:</p>
-                                <img
-                                    src={URL.createObjectURL(form.image)}
-                                    className="product-img"
-                                />
-                            </div>
-                        )}
-
-                        <select name="in_stock" value={form.in_stock} onChange={handleChange} className="full">
-                            <option value={1}>In Stock</option>
-                            <option value={0}>Out of Stock</option>
-                        </select>
-
-                        {(editId ? canEdit : canCreate) && (
-                            <button onClick={handleSubmit} disabled={loading}>
-                                {loading ? "Processing..." : editId ? "Update" : "Create"}
+                            <button onClick={handleSubmit}>
+                                {editId ? "Update" : "Create"}
                             </button>
-                        )}
-                    </div>
+                        </div>
                     )}
 
                     {/* TABLE */}
@@ -255,7 +257,6 @@ export default function Products() {
                                 <th>Price</th>
                                 <th>Qty</th>
                                 <th>Status</th>
-                                <th>Change</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -263,54 +264,38 @@ export default function Products() {
                         <tbody>
                             {products.map(p => (
                                 <tr key={p.id}>
-                                    <td>
-                                        {p.image && (
-                                            <img src={p.image} className="product-img" />
-                                        )}
-                                    </td>
-
+                                    <td>{p.image && <img src={p.image} className="product-img" />}</td>
                                     <td>{p.name}</td>
                                     <td>₹{p.price}</td>
                                     <td>{p.quantity}</td>
+                                    <td>{p.in_stock ? "In Stock" : "Out"}</td>
 
                                     <td>
-                                        <span className={`stock ${p.in_stock ? "in" : "out"}`}>
-                                            {p.in_stock ? "In Stock" : "Out of Stock"}
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        {canEdit ? (
-                                            <select
-                                                value={p.in_stock}
-                                                onChange={(e) =>
-                                                    toggleStock(p.id, Number(e.target.value))
-                                                }
-                                            >
-                                                <option value={1}>In Stock</option>
-                                                <option value={0}>Out of Stock</option>
-                                            </select>
-                                        ) : (
-                                            <span>{p.in_stock ? "In Stock" : "Out of Stock"}</span>
-                                        )}
-                                    </td>
-
-                                    <td>
-                                        {canEdit && (
-                                            <button className="btn btn-edit" onClick={() => handleEdit(p)}>
-                                                Edit
-                                            </button>
-                                        )}
-                                        {canDelete && (
-                                            <button className="btn btn-delete" onClick={() => handleDelete(p.id)}>
-                                                Delete
-                                            </button>
-                                        )}
+                                        {canEdit && <button onClick={() => handleEdit(p)}>Edit</button>}
+                                        {canDelete && <button onClick={() => handleDelete(p.id)}>Delete</button>}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+
+                    {/* ✅ PAGINATION */}
+                    <div className="pagination">
+                        <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+                            Prev
+                        </button>
+
+                        <span>
+                            Page {pagination.current_page} of {pagination.last_page}
+                        </span>
+
+                        <button
+                            disabled={page === pagination.last_page}
+                            onClick={() => setPage(page + 1)}
+                        >
+                            Next
+                        </button>
+                    </div>
 
                 </div>
             </div>

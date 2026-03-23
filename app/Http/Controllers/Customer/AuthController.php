@@ -4,50 +4,32 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
-use Illuminate\Http\Request;
-use App\Models\User;
-use App\Http\Helpers\Utils;
-use Illuminate\Support\Facades\Storage;
-
-use Illuminate\Support\Facades\Hash;
+use App\Services\AuthService;
 use Inertia\Inertia;
 
 class AuthController extends Controller
 {
+    protected $authService;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
+
     // ✅ Show Register Page
     public function showRegister()
     {
         return Inertia::render('Register');
     }
 
-    private function uploadImage($request)
-{
-    if ($request->hasFile('image')) {
-        return $request->file('image')->store('users', 'public');
-    }
-
-    return null;
-}
-    
-
-    // ✅ Register
+    // ✅ Register (clean)
     public function register(RegisterRequest $request)
     {
-        $data = $request->validated();
+        $this->authService->register($request->validated());
 
-        $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'phone'    => $data['phone'] ,
-            'bio'      => $data['bio'] ,
-            'image' => $this->uploadImage($request),
-            'password' => Hash::make($data['password']),
-            'role' => 'User',
-        ]);
-
-        $user->assignRole('User');
-
-        return redirect()->route('login')->with("success",'register Successfully');
+        return redirect()
+            ->route('login')
+            ->with('success', 'Register Successfully');
     }
 
     // ✅ Show Login Page
@@ -56,27 +38,24 @@ class AuthController extends Controller
         return Inertia::render('Login');
     }
 
-    // ✅ Login
+    // ✅ Login (clean)
     public function login(LoginRequest $request)
     {
-        if (!auth()->attempt($request->validated())) {
+        $success = $this->authService->loginWeb($request->validated());
+
+        if (!$success) {
             return back()->withErrors([
                 'email' => 'Invalid credentials'
             ]);
         }
 
-        $request->session()->regenerate();
-
         return redirect()->route('dashboard');
     }
 
-    // ✅ Logout
-    public function logout(Request $request)
+    // ✅ Logout (clean)
+    public function logout()
     {
-        auth()->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $this->authService->logoutWeb();
 
         return redirect()->route('login');
     }

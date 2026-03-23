@@ -34,7 +34,7 @@ class RolePermissionSeeder extends Seeder
             ]);
         }
 
-        dd("ds");
+        // dd("ds");
         // ✅ Roles (ALL api)
         $admin = Role::firstOrCreate([
             'name' => 'Admin',

@@ -6,9 +6,20 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductService
 {
-    public function getAll()
+    public function getAll($request)
     {
-        return Product::latest()->get()->map(function ($p) {
+        $query = Product::query();
+
+        // 🔍 Search
+        if ($request->search) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // 📄 Pagination
+        $products = $query->latest()->paginate(5);
+
+        // Transform
+        $products->getCollection()->transform(function ($p) {
             return [
                 'id' => $p->id,
                 'name' => $p->name,
@@ -19,6 +30,8 @@ class ProductService
                 'image' => $p->image ? asset('storage/' . $p->image) : null,
             ];
         });
+
+        return $products;
     }
 
     public function create($data)
@@ -27,34 +40,41 @@ class ProductService
             $data['image'] = $data['image']->store('products', 'public');
         }
 
-        $data['in_stock'] = isset($data['quantity'])
-        ?($data['quantity'] > 0 ? 1 :0)
-        : ($data['in_stock']??1);
+        $data['in_stock'] = $data['quantity'] > 0 ? 1 : 0;
 
         return Product::create($data);
     }
 
     public function update($id, $data)
-{
-    $product = Product::findOrFail($id);
+    {
+        $product = Product::findOrFail($id);
 
-    if (isset($data['image'])) {
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        if (isset($data['image'])) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+
+            $data['image'] = $data['image']->store('products', 'public');
         }
 
-        $data['image'] = $data['image']->store('products', 'public');
+        $data['in_stock'] = $data['quantity'] > 0 ? 1 : 0;
+
+        $product->update($data);
+
+        return $product;
     }
 
-    // ✅ auto update stock
-    if (isset($data['quantity'])) {
-        $data['in_stock'] = $data['quantity'] > 0;
+    // ✅ ADD THIS (missing method)
+    public function toggleStock($id, $status)
+    {
+        $product = Product::findOrFail($id);
+
+        $product->update([
+            'in_stock' => (bool) $status
+        ]);
+
+        return $product;
     }
-
-    $product->update($data);
-
-    return $product;
-}
 
     public function delete($id)
     {

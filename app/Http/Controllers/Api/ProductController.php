@@ -20,12 +20,12 @@ class ProductController extends Controller
         $this->middleware('permission:delete_product')->only(['destroy']);
     }
 
-    public function index()
-    {
-        return response()->json([
-            'data' => $this->service->getAll()
-        ]);
-    }
+    public function index(Request $request)
+{
+    return response()->json(
+        $this->service->getAll($request)
+    );
+}
 
     public function store(ProductRequest $request)
     {
@@ -58,11 +58,7 @@ class ProductController extends Controller
 
     public function toggleStock(Request $request, $id)
 {
-    $product = Product::findOrFail($id);
-
-    $product->update([
-        'in_stock' => (bool) $request->in_stock
-    ]);
+    $product = $this->service->toggleStock($id, $request->in_stock);
 
     return response()->json([
         'success' => true,

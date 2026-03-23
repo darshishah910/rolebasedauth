@@ -17,7 +17,7 @@ class CheckPermission
         return $next($request);
     }
 
-    $hasPermission = \App\Models\UserPermission::where('user_id', $user->id)
+    $hasPermission = UserPermission::where('user_id', $user->id)
         ->where('permission', $permission)
         ->exists();
 

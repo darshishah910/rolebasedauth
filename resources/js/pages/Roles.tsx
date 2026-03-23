@@ -8,8 +8,13 @@ import "../styles/style.css";
 export default function Roles() {
     const user = { name: "Admin", role: "admin" };
 
-    const handleLogout = () => {
-        router.post("/logout");
+    const handleLogout = async () => {
+        try {
+            await axios.post("/logout");
+        } catch (e) { }
+
+        localStorage.removeItem("token");
+        window.location.href = "/login";
     };
 
     const [roles, setRoles] = useState<string[]>([]);

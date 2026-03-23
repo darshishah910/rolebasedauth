@@ -3,62 +3,42 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
+use App\Services\ProductService;
+use App\Http\Requests\ProductRequest;
+// use App\Services\ProductService;
+
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProductController extends Controller
 {
-    // ✅ Show Product Page
-    public function index()
-    {
-        $products = Product::latest()->get();
+    protected $service;
 
+    public function __construct(ProductService $service)
+    {
+        $this->service = $service;
+    }
+
+    // ✅ Show Product Page
+    public function index(Request $request)
+    {
         return Inertia::render('Products', [
-            'products' => $products
+            'products' => $this->service->getAll($request)
         ]);
     }
 
     // ✅ Store Product
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric',
-            'quantity' => 'required|integer',
-            'description' => 'nullable',
-            'image' => 'nullable|image',
-        ]);
-          $data['in_stock'] = $request->quantity > 0 ? 1 : 0;
-
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('products', 'public');
-        }
-
-        Product::create($data);
+        $this->service->create($request->validated());
 
         return back()->with('success', 'Product created');
     }
 
     // ✅ Update Product
-    public function update(Request $request, $id)
+    public function update(ProductRequest $request, $id)
     {
-        $product = Product::findOrFail($id);
-
-        $data = $request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric',
-            'quantity' => 'required|integer',
-            'description' => 'nullable',
-            'image' => 'nullable|image',
-            
-        ]);
-
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('products', 'public');
-        }
-
-        $product->update($data);
+        $this->service->update($id, $request->validated());
 
         return back()->with('success', 'Product updated');
     }
@@ -66,11 +46,7 @@ class ProductController extends Controller
     // ✅ Toggle Stock
     public function toggleStock(Request $request, $id)
     {
-        $product = Product::findOrFail($id);
-
-        $product->update([
-            'in_stock' => (bool) $request->in_stock
-        ]);
+        $this->service->toggleStock($id, $request->in_stock);
 
         return back()->with('success', 'Stock updated');
     }
@@ -78,7 +54,7 @@ class ProductController extends Controller
     // ✅ Delete Product
     public function destroy($id)
     {
-        Product::findOrFail($id)->delete();
+        $this->service->delete($id);
 
         return back()->with('success', 'Product deleted');
     }
