@@ -2,6 +2,9 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import '../css/app.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Roles from "./pages/Roles";
+import RolesList from "./pages/RolesList";
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -21,3 +24,16 @@ createInertiaApp({
         color: '#4B5563',
     },
 });
+
+function App() {
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/roles" element={<Roles />} />
+                <Route path="/roles-list" element={<RolesList />} />
+            </Routes>
+        </BrowserRouter>
+    );
+}
+
+export default App;

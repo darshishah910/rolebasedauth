@@ -24,8 +24,8 @@ class LoginRequest extends FormRequest
     {
         return [
             //
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|max:8|regex:/^(?=.*[A-Z])(?=.*[0-9])(?=.*[@$!%*?&]).+$/'
+            'email' => 'required|email',
+            'password' => 'required|min:6|max:10|regex:/^(?=.*[A-Z])(?=.*[0-9])(?=.*[@$!%*?&]).+$/'
         ];
     }
 
@@ -34,10 +34,9 @@ class LoginRequest extends FormRequest
         return [
             'email.required' => 'Email is required',
             'email.email' => 'Enter a valid email',
-            'email.unique' => 'Email id already exists',
             'password.required' => 'password is required',
             'password.min'=>'password must be at least 6 characters',
-            'password.max' => 'password max length is 8 characters',
+            'password.max' => 'password max length is 10 characters',
             'password.regex' => 'Password must contain at least one uppercase letter, one number, and one special character.',
         ];
     }
