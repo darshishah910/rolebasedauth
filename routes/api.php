@@ -49,12 +49,12 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     ];
 });
 
-Route::middleware(['auth:api', 'role:Admin'])->group(function () {
+Route::middleware('auth:api')->group(function () {
 
     Route::get('/roles', [RoleController::class, 'index']);
-    Route::post('/roles', [RoleController::class, 'store']);
-    Route::put('/roles/{id}', [RoleController::class, 'update']);
-    Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
-
-    Route::post('/users/{id}/role', [UserController::class, 'assignRole']);
+    Route::get('/users-by-role/{role}', [RoleController::class, 'usersByRole']);
+    Route::post('/assign-user-permissions', [RoleController::class, 'assignUserPermissions']);
+    Route::get('/all-users-with-permissions', [RoleController::class, 'allUsersWithPermissions']);
 });
+
+Route::middleware('auth:api')->get('/user', [UserController::class, 'getUserWithPermissions']);

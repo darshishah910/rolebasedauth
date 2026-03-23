@@ -7,6 +7,7 @@ use App\Http\Requests\UserRequest;
 use App\Services\UserService;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\UserPermission;
 use Spatie\Permission\Models\Role;
 
 
@@ -104,6 +105,29 @@ class UserController extends Controller
     return response()->json([
         'message' => 'Role assigned',
         'user' => $user->load('roles')
+    ]);
+}
+
+public function getUserWithPermissions(Request $request)
+{
+    $user = $request->user();
+
+    // ✅ Admin = all permissions
+    if ($user->role === 'admin') {
+        $permissions = [
+            'view_product',
+            'create_product',
+            'edit_product',
+            'delete_product'
+        ];
+    } else {
+        $permissions = UserPermission::where('user_id', $user->id)
+            ->pluck('permission');
+    }
+
+    return response()->json([
+        'user' => $user,
+        'permissions' => $permissions
     ]);
 }
     

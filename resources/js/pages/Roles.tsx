@@ -46,8 +46,13 @@ export default function Roles() {
     };
 
     const handleUserSelect = (userId: number) => {
+        if (!userId) return;
+
         setSelectedUser(userId);
+
         const user = users.find(u => u.id === userId);
+
+        // ✅ load permissions from API response
         setSelectedPermissions(user?.permissions || []);
     };
 
@@ -60,11 +65,14 @@ export default function Roles() {
     };
 
     const savePermissions = async () => {
+        if (!selectedUser) return;
+
         await axios.post("/assign-user-permissions", {
             user_id: selectedUser,
             permissions: selectedPermissions
         });
 
+        alert("Permissions saved ✅");
         router.visit("/roles-list");
     };
 
@@ -92,7 +100,8 @@ export default function Roles() {
 
                     {users.length > 0 && (
                         <select onChange={(e) => handleUserSelect(Number(e.target.value))}>
-                            <option>Select User</option>
+                            <option value="">Select User</option>
+
                             {users.map(user => (
                                 <option key={user.id} value={user.id}>
                                     {user.name}

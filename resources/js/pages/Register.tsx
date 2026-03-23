@@ -65,7 +65,7 @@ export default function Register() {
         try {
             await axios.post('/register', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
-                withCredentials: true,
+                // withCredentials: true,
             });
 
             toast.success('Registration successful!');

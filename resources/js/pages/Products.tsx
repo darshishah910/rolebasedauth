@@ -27,10 +27,16 @@ export default function Products() {
         image: null,
         in_stock: 1
     });
+    const isAdmin = user?.role === "admin";
 
     const [editId, setEditId] = useState<number | null>(null);
     const [errors, setErrors] = useState<any>({});
     const [loading, setLoading] = useState(false);
+
+    const [permissions, setPermissions] = useState<string[]>([]);
+    const canCreate = isAdmin || permissions?.includes("create_product");
+    const canEdit = isAdmin || permissions?.includes("edit_product");
+    const canDelete = isAdmin || permissions?.includes("delete_product");
 
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -38,6 +44,7 @@ export default function Products() {
     const fetchUser = async () => {
         const res = await axios.get("/user");
         setUser(res.data.user);
+        setPermissions(res.data.permissions);
     };
 
     // ✅ Fetch products
@@ -192,6 +199,7 @@ export default function Products() {
                     <h2>Products</h2>
 
                     {/* FORM */}
+                    {(canCreate || (editId && canEdit)) && (
                     <div className="product-form">
                         <input name="name" value={form.name} onChange={handleChange} placeholder="Name" />
                         {errors.name && <p className="error">{errors.name}</p>}
@@ -230,10 +238,13 @@ export default function Products() {
                             <option value={0}>Out of Stock</option>
                         </select>
 
-                        <button onClick={handleSubmit} disabled={loading}>
-                            {loading ? "Processing..." : editId ? "Update" : "Create"}
-                        </button>
+                        {(editId ? canEdit : canCreate) && (
+                            <button onClick={handleSubmit} disabled={loading}>
+                                {loading ? "Processing..." : editId ? "Update" : "Create"}
+                            </button>
+                        )}
                     </div>
+                    )}
 
                     {/* TABLE */}
                     <table className="product-table">
@@ -269,24 +280,32 @@ export default function Products() {
                                     </td>
 
                                     <td>
-                                        <select
-                                            value={p.in_stock}
-                                            onChange={(e) =>
-                                                toggleStock(p.id, Number(e.target.value))
-                                            }
-                                        >
-                                            <option value={1}>In Stock</option>
-                                            <option value={0}>Out of Stock</option>
-                                        </select>
+                                        {canEdit ? (
+                                            <select
+                                                value={p.in_stock}
+                                                onChange={(e) =>
+                                                    toggleStock(p.id, Number(e.target.value))
+                                                }
+                                            >
+                                                <option value={1}>In Stock</option>
+                                                <option value={0}>Out of Stock</option>
+                                            </select>
+                                        ) : (
+                                            <span>{p.in_stock ? "In Stock" : "Out of Stock"}</span>
+                                        )}
                                     </td>
 
                                     <td>
-                                        <button className="btn btn-edit" onClick={() => handleEdit(p)}>
-                                            Edit
-                                        </button>
-                                        <button className="btn btn-delete" onClick={() => handleDelete(p.id)}>
-                                            Delete
-                                        </button>
+                                        {canEdit && (
+                                            <button className="btn btn-edit" onClick={() => handleEdit(p)}>
+                                                Edit
+                                            </button>
+                                        )}
+                                        {canDelete && (
+                                            <button className="btn btn-delete" onClick={() => handleDelete(p.id)}>
+                                                Delete
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

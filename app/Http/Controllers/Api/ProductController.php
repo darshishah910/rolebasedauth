@@ -14,10 +14,10 @@ class ProductController extends Controller
     public function __construct(ProductService $service)
     {
         $this->service = $service;
-    //     $this->middleware('permission:view_product')->only(['index']);
-    // $this->middleware('permission:create_product')->only(['store']);
-    // $this->middleware('permission:edit_product')->only(['update']);
-    // $this->middleware('permission:delete_product')->only(['destroy']);
+        $this->middleware('permission:view_product')->only(['index']);
+        $this->middleware('permission:create_product')->only(['store']);
+        $this->middleware('permission:edit_product')->only(['update']);
+        $this->middleware('permission:delete_product')->only(['destroy']);
     }
 
     public function index()

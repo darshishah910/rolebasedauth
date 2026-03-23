@@ -57,7 +57,7 @@ export default function Dashboard() {
     // ✅ Initial Load
     useEffect(() => {
         const token = localStorage.getItem("token");
-
+        
         if (!token) {
             window.location.href = "/login";
             return;

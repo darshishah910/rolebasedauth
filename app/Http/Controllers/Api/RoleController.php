@@ -1,33 +1,40 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserPermission;
+use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:api');
-    }
-
-    // ✅ REQUIRED (THIS FIXES YOUR ERROR)
+    // ✅ Get roles + permissions
     public function index()
     {
         return response()->json([
-            'roles' => ['admin', 'manager', 'user'],
+            'roles' => [
+                ['name' => 'Admin'],
+                ['name' => 'Manager'],
+                ['name' => 'User'],
+            ],
             'permissions' => [
                 'view_product',
                 'create_product',
                 'edit_product',
-                'delete_product'
+                'delete_product',
             ]
         ]);
     }
 
+    // ✅ Get users by role
+    public function usersByRole($role)
+    {
+        $users = User::where('role', $role)->get();
+
+        return response()->json($users);
+    }
+
+    // ✅ Assign permissions
     public function assignUserPermissions(Request $request)
     {
         $request->validate([
@@ -35,6 +42,7 @@ class RoleController extends Controller
             'permissions' => 'required|array'
         ]);
 
+        // remove old
         UserPermission::where('user_id', $request->user_id)->delete();
 
         foreach ($request->permissions as $perm) {
@@ -45,24 +53,26 @@ class RoleController extends Controller
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Permissions saved'
+            'success' => true
         ]);
     }
 
+    // ✅ (OPTIONAL) for roles-list page
     public function allUsersWithPermissions()
     {
         $users = User::with('permissions')->get();
 
-        return response()->json(
-            $users->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'role' => $user->role,
-                    'permissions' => $user->permissions->pluck('permission'),
-                ];
-            })
-        );
+         $data = $users->map(function ($user) {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'role' => $user->role,
+            'permissions' => $user->permissions->map(function ($p) {
+                return $p->permission;
+            }),
+        ];
+    });
+
+    return response()->json($data);
     }
 }
