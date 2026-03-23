@@ -22,20 +22,33 @@ class UserController extends Controller
     }
 
     // ✅ Get all users
-    public function index()
-    {
-        if (auth()->user()->role !== 'admin') {
+    // public function index()
+    // {
+    //     if (auth()->user()->role !== 'admin') {
+    //     return response()->json([
+    //         'success' => false,
+    //         'message' => 'Unauthorized'
+    //     ], 403);
+    // }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $this->userService->getAllUsers()
+    //     ]);
+    // }
+    public function index(Request $request)
+{
+    if (auth()->user()->role !== 'admin') {
         return response()->json([
             'success' => false,
             'message' => 'Unauthorized'
         ], 403);
     }
 
-        return response()->json([
-            'success' => true,
-            'data' => $this->userService->getAllUsers()
-        ]);
-    }
+    $users = $this->userService->getAllUsers($request);
+
+    return response()->json($users);
+}
 
     // ✅ Create user
     public function store(UserRequest $request)

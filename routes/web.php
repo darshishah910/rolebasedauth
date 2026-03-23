@@ -34,9 +34,9 @@ Route::get('/products', [ProductController::class, 'index'])->name('products');
 Route::get('/roles',[RoleController::class,'index']);
 
 Route::get('/roles-list', function () {
-    return Inertia::render('RolesList'); // 👈 IMPORTANT (file name)
+    return Inertia::render('RolesList'); 
 });
 
 Route::get('/profile', [ProfileController::class, 'index']);
-    Route::post('/profile/update', [ProfileController::class, 'update']);
-    Route::post('/profile/change-password', [ProfileController::class, 'changePassword']);
+Route::post('/profile/update', [ProfileController::class, 'update']);
+Route::post('/profile/change-password', [ProfileController::class, 'changePassword']);

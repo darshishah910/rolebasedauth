@@ -257,6 +257,7 @@ export default function Products() {
                                 <th>Price</th>
                                 <th>Qty</th>
                                 <th>Status</th>
+                                <th>Change</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -264,15 +265,60 @@ export default function Products() {
                         <tbody>
                             {products.map(p => (
                                 <tr key={p.id}>
-                                    <td>{p.image && <img src={p.image} className="product-img" />}</td>
+                                    <td>
+                                        {p.image && (
+                                            <img src={p.image} className="product-img" />
+                                        )}
+                                    </td>
+
                                     <td>{p.name}</td>
                                     <td>₹{p.price}</td>
                                     <td>{p.quantity}</td>
-                                    <td>{p.in_stock ? "In Stock" : "Out"}</td>
 
+                                    {/* ✅ STATUS BADGE */}
                                     <td>
-                                        {canEdit && <button onClick={() => handleEdit(p)}>Edit</button>}
-                                        {canDelete && <button onClick={() => handleDelete(p.id)}>Delete</button>}
+                                        <span className={`stock ${p.in_stock ? "in" : "out"}`}>
+                                            {p.in_stock ? "In Stock" : "Out of Stock"}
+                                        </span>
+                                    </td>
+
+                                    {/* ✅ DROPDOWN */}
+                                    <td>
+                                        {canEdit ? (
+                                            <select
+                                                className="stock-select"
+                                                value={p.in_stock}
+                                                onChange={(e) =>
+                                                    toggleStock(p.id, Number(e.target.value))
+                                                }
+                                            >
+                                                <option value={1}>In Stock</option>
+                                                <option value={0}>Out of Stock</option>
+                                            </select>
+                                        ) : (
+                                            "-"
+                                        )}
+                                    </td>
+
+                                    {/* ✅ ACTION BUTTONS */}
+                                    <td>
+                                        {canEdit && (
+                                            <button
+                                                className="btn btn-edit"
+                                                onClick={() => handleEdit(p)}
+                                            >
+                                                Edit
+                                            </button>
+                                        )}
+
+                                        {canDelete && (
+                                            <button
+                                                className="btn btn-delete"
+                                                onClick={() => handleDelete(p.id)}
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -281,16 +327,22 @@ export default function Products() {
 
                     {/* ✅ PAGINATION */}
                     <div className="pagination">
-                        <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+                        <button
+                            disabled={!pagination?.current_page || pagination.current_page === 1}
+                            onClick={() => setPage(page - 1)}
+                        >
                             Prev
                         </button>
 
                         <span>
-                            Page {pagination.current_page} of {pagination.last_page}
+                            Page {pagination?.current_page || 1} of {pagination?.last_page || 1}
                         </span>
 
                         <button
-                            disabled={page === pagination.last_page}
+                            disabled={
+                                !pagination?.last_page ||
+                                pagination.current_page === pagination.last_page
+                            }
                             onClick={() => setPage(page + 1)}
                         >
                             Next

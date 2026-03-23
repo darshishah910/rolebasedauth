@@ -43,6 +43,12 @@ export default function Profile() {
     };
 
     useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
         fetchProfile();
     }, []);
 

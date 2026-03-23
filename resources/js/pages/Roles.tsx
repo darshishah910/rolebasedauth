@@ -39,6 +39,12 @@ export default function Roles() {
     };
 
     useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
         fetchData();
     }, []);
 

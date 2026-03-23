@@ -15,6 +15,26 @@ export default function Dashboard() {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // 🔥 NEW STATES
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState<any>({});
+
+    // ✅ Fetch Users (Search + Pagination)
+    const fetchUsers = async () => {
+        try {
+            const res = await axios.get("/users", {
+                params: { search, page }
+            });
+
+            setUsers(res.data.data);
+            setPagination(res.data);
+
+        } catch (err) {
+            console.error("User Fetch Error:", err);
+        }
+    };
+
     // ✅ Toggle User Status
     const toggleStatus = async (id: number, value: number) => {
         try {
@@ -48,7 +68,7 @@ export default function Dashboard() {
     const handleLogout = async () => {
         try {
             await axios.post("/logout");
-        } catch (e) { }
+        } catch (e) {}
 
         localStorage.removeItem("token");
         window.location.href = "/login";
@@ -57,7 +77,7 @@ export default function Dashboard() {
     // ✅ Initial Load
     useEffect(() => {
         const token = localStorage.getItem("token");
-        
+
         if (!token) {
             window.location.href = "/login";
             return;
@@ -74,10 +94,9 @@ export default function Dashboard() {
                 const statsRes = await axios.get("/stats");
                 setStats(statsRes.data);
 
-                // Users (Admin only)
+                // Users (Admin)
                 if (loggedUser.role === "admin") {
-                    const usersRes = await axios.get("/users");
-                    setUsers(usersRes.data.data);
+                    await fetchUsers();
                 }
 
             } catch (error) {
@@ -90,27 +109,35 @@ export default function Dashboard() {
         init();
     }, []);
 
+    // ✅ Search + Pagination Effect (Debounce)
+    useEffect(() => {
+        if (!user || user.role !== "admin") return;
+
+        const delay = setTimeout(() => {
+            fetchUsers();
+        }, 400);
+
+        return () => clearTimeout(delay);
+    }, [search, page]);
+
     if (loading) {
         return <h3 style={{ textAlign: "center" }}>Loading...</h3>;
     }
 
     return (
         <div className="container">
-            {/* ✅ Sidebar */}
+            {/* Sidebar */}
             <Sidebar user={user} />
 
-            {/* ✅ Main */}
             <div className="main">
-                {/* ✅ Navbar */}
                 <Navbar user={user} onLogout={handleLogout} />
 
-                {/* ✅ Content */}
                 <div className="content">
                     <div className="dashboard">
 
                         <h2>Dashboard</h2>
 
-                        {/* ✅ PROFILE */}
+                        {/* PROFILE */}
                         {user && (
                             <div className="profile-card">
                                 <img
@@ -130,12 +157,11 @@ export default function Dashboard() {
                                     <span className={`role-badge ${user.role}`}>
                                         {user.role}
                                     </span>
-
                                 </div>
                             </div>
                         )}
 
-                        {/* ✅ STATS */}
+                        {/* STATS */}
                         {user?.role === "admin" && (
                             <div className="stats">
                                 <div className="stat-card">
@@ -155,7 +181,21 @@ export default function Dashboard() {
                             </div>
                         )}
 
-                        {/* ✅ USER TABLE */}
+                        {/* SEARCH */}
+                        {user?.role === "admin" && (
+                            <input
+                                type="text"
+                                placeholder="Search users..."
+                                value={search}
+                                onChange={(e) => {
+                                    setSearch(e.target.value);
+                                    setPage(1); // reset page
+                                }}
+                                className="search-input"
+                            />
+                        )}
+
+                        {/* TABLE */}
                         {user?.role === "admin" && (
                             <table className="user-table">
                                 <thead>
@@ -196,6 +236,29 @@ export default function Dashboard() {
                                     ))}
                                 </tbody>
                             </table>
+                        )}
+
+                        {/* PAGINATION */}
+                        {user?.role === "admin" && (
+                            <div className="pagination">
+                                <button
+                                    disabled={page === 1}
+                                    onClick={() => setPage(page - 1)}
+                                >
+                                    Prev
+                                </button>
+
+                                <span>
+                                    Page {pagination.current_page || 1} of {pagination.last_page || 1}
+                                </span>
+
+                                <button
+                                    disabled={page === pagination.last_page}
+                                    onClick={() => setPage(page + 1)}
+                                >
+                                    Next
+                                </button>
+                            </div>
                         )}
 
                     </div>

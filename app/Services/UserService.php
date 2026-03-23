@@ -9,23 +9,34 @@ use Illuminate\Support\Facades\Storage;
 class UserService
 {
     // ✅ Get all users
-    public function getAllUsers()
-    {
-        return User::with('roles')->where('role', '!=', 'admin')->latest()->get()->map(function ($user) {
-            return [
-                'id'        => $user->id,
-                'name'      => $user->name,
-                'email'     => $user->email,
-                'phone'     => $user->phone,
-                'bio'       => $user->bio,
-                'is_active' => $user->is_active,
-                'role'      => $user->getRoleNames()->first() ,
-                'image'     => $user->image
-                    ? asset('storage/' . $user->image)
-                    : null,
-            ];
+    public function getAllUsers($request)
+{
+    $query = User::query();
+
+    // 🔍 SEARCH (name + email)
+    if ($request->search) {
+        $query->where(function ($q) use ($request) {
+            $q->where('name', 'like', '%' . $request->search . '%')
+              ->orWhere('email', 'like', '%' . $request->search . '%');
         });
     }
+
+    // 📄 PAGINATION (10 per page)
+    $users = $query->latest()->paginate(5);
+
+    // ✅ Transform data
+    $users->getCollection()->transform(function ($u) {
+        return [
+            'id' => $u->id,
+            'name' => $u->name,
+            'email' => $u->email,
+            'role' => $u->getRoleNames()->first(),
+            'is_active' => $u->is_active,
+        ];
+    });
+
+    return $users;
+}
 
     // ✅ Create user
     public function createUser(array $data)
