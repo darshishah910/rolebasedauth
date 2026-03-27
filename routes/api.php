@@ -7,31 +7,18 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ProfileController;
 
-/*
-|--------------------------------------------------------------------------
-| Public Routes
-|--------------------------------------------------------------------------
-*/
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-
-/*
-|--------------------------------------------------------------------------
-| Protected Routes (auth:api)
-|--------------------------------------------------------------------------
-*/
-
 Route::middleware('auth:api')->group(function () {
-
-    // 🔐 Auth
+  // 🔐 Auth
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // 👤 Current User (WITH permissions)
+    
     Route::get('/user', [UserController::class, 'getUserWithPermissions']);
 
-    // 👥 Users
+   
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/stats', [UserController::class, 'stats']);
     Route::post('/users', [UserController::class, 'store']);
@@ -39,14 +26,14 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/user/toggle/{id}', [UserController::class, 'toggleStatus']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-    // 📦 Products
+   
     Route::get('/products', [ProductController::class, 'index']);
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     Route::post('/products/toggle/{id}', [ProductController::class, 'toggleStock']);
 
-    // 👤 Profile
+    
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile', [ProfileController::class, 'update']);
     Route::post('/change-password', [ProfileController::class, 'changePassword']);
@@ -54,11 +41,6 @@ Route::middleware('auth:api')->group(function () {
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| Roles & Permissions
-|--------------------------------------------------------------------------
-*/
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/roles', [RoleController::class, 'index']);
